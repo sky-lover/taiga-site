@@ -1,0 +1,84 @@
+const canvas = document.getElementById("three-canvas");
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x0e1412, 8, 35);
+
+const camera = new THREE.PerspectiveCamera(
+  55,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  100
+);
+camera.position.set(0, 1.5, 8);
+
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  alpha: true,
+  antialias: true
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+/* Lighting */
+const ambient = new THREE.AmbientLight(0x9fb5a8, 0.6);
+scene.add(ambient);
+
+const directional = new THREE.DirectionalLight(0xcfe6dc, 0.8);
+directional.position.set(5, 10, 5);
+scene.add(directional);
+
+/* Helper to create item planes */
+const loader = new THREE.TextureLoader();
+
+function createItem(texturePath, x, y, z) {
+  const texture = loader.load(texturePath);
+  texture.magFilter = THREE.NearestFilter;
+
+  const material = new THREE.MeshStandardMaterial({
+    map: texture,
+    transparent: true
+  });
+
+  const geometry = new THREE.PlaneGeometry(1, 1);
+  const mesh = new THREE.Mesh(geometry, material);
+
+  mesh.position.set(x, y, z);
+  mesh.userData.baseY = y;
+  scene.add(mesh);
+  return mesh;
+}
+
+/* Items */
+const items = {
+  potion: createItem("assets/textures/potion.png", -3, 1.5, 0),
+  luck: createItem("assets/textures/luck.png", -1, 2, -1),
+  spruce: createItem("assets/textures/spruce_log.png", 1, 1.4, 0),
+  orchid: createItem("assets/textures/orchid.png", 3, 1.8, -1),
+  bow: createItem("assets/textures/bow.png", 2, 1.1, 1),
+  golem: createItem("assets/textures/golem.png", 0, 0.8, -2)
+};
+
+/* Animation Loop */
+let t = 0;
+function animate() {
+  t += 0.01;
+
+  Object.values(items).forEach((item, i) => {
+    item.position.y = item.userData.baseY + Math.sin(t + i) * 0.1;
+    item.rotation.y = Math.sin(t * 0.3 + i) * 0.1;
+  });
+
+  camera.position.x = Math.sin(t * 0.1) * 0.3;
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+/* Resize */
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
